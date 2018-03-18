@@ -1,6 +1,9 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import student_detail, student_marks, stclass, studentid, student_marks12, nalanda
 from .forms import selectclass, selectclass2
+
+import math
+
 def roman(num):
     if num=='1':
         return('I')
@@ -84,18 +87,18 @@ def getgrade(userid,sub,gradeitem):
         marks=0
     if marks is None:
         marks=0
-    return(round(float(marks)))
+    return(math.ceil(float(marks)))
 
 def getPT1(userid,sub):
     ept1 = getgrade(userid,sub,'PT 1')
     ept2 = getgrade(userid,sub,'PT 2')
-    ePT1 = round((max(int(ept1),int(ept2)))/2)
+    ePT1 = math.ceil((max(int(ept1),int(ept2)))/2)
     return(ePT1)
 
 def makegrade(cl,num):
     cl=int(cl)
     if cl>6 and cl<16:
-        num=num*1.25
+     num=num*1.25
     if num>90:
         g="A1"
     elif num>80 and num<91:
@@ -104,8 +107,37 @@ def makegrade(cl,num):
         g="B1"
     elif num>60 and num<71:
         g="B2"
+    elif num >50 and num < 61:
+        g="C1"  
+    elif num >40 and num < 51:
+        g="C2" 
+    elif num >32 and num < 41:
+        g="D"     
     else:
-        g="C"
+        g="E"
+    return(g)
+
+
+def makegrade1(cl,num):
+    cl=int(cl)
+    if cl>6 and cl<16:
+        num=num*1
+    if num>90:
+        g="A1"
+    elif num>80 and num<91:
+        g="A2"
+    elif num>70 and num<81:
+        g="B1"
+    elif num>60 and num<71:
+        g="B2"
+    elif num >50 and num < 61:
+        g="C1"  
+    elif num >40 and num < 51:
+        g="C2" 
+    elif num >32 and num < 41:
+        g="D"     
+    else:
+        g="E"
     return(g)
 
 def getsub(userid,cl,sub):
@@ -114,7 +146,7 @@ def getsub(userid,cl,sub):
     else:
         pt1 = int(getgrade(userid,sub, 'PT'))
     pt3 = int(getgrade(userid,sub,'PT 3'))
-    pt2 = round(pt3/2)
+    pt2 = math.ceil(pt3/2)
     ns1 = int(getgrade(userid,sub,'NS 1'))
     ns2 = int(getgrade(userid,sub,'NS 2'))
     sea1 = int(getgrade(userid,sub,'SEA 1'))
@@ -123,12 +155,12 @@ def getsub(userid,cl,sub):
     ann = int(getgrade(userid,sub, 'Annual'))
     mo1 = pt1+ns1+sea1+mt
     mo2 = pt2+ns2+sea2+ann
-    t1 = round(mo1/2)
-    t2 = round(mo2/2)
+    t1 = math.ceil(mo1/2)
+    t2 = math.ceil(mo2/2)
     total = t1+t2
-    grade1 = makegrade(cl,mo1)
-    grade2 = makegrade(cl,mo2)
-    grade3 = makegrade(cl,total)
+    grade1 = makegrade1(cl,mo1)
+    grade2 = makegrade1(cl,mo2)
+    grade3 = makegrade1(cl,total)
     data=[pt1,ns1,sea1,mt,mo1,grade1,pt2,ns2,sea2,ann,mo2,grade2,t1,t2,total,grade3]
     return(data)
 
@@ -141,27 +173,29 @@ def getcom(userid,field):
         g=0
     if g is None:
         g=0
-    g=round(float(g))
+    g=math.ceil(float(g))
     return(g)
 
 def database(cl,userid):
+    import math 
+
     comhy = getgrade(userid,'Computer','Half Yearly')
     compt2 = getgrade(userid,'Computer','PT II')
     compra = getgrade(userid,'Computer','Practical')
     comann = getgrade(userid,'Computer','Annual')
-    comT1 = comhy
-    comT2 = int(compt2)+int(compra)+int(comann)
-    comG1 = makegrade(cl,comT1*1.67)
-    comG2 = makegrade(cl,comT2*1.67)
+    comT1 = math.ceil(comhy*100/60)
+    comT2 = math.ceil((int(compt2)+int(compra)+int(comann))*100/60)
+    comG1 = makegrade1(cl,comT1)
+    comG2 = makegrade1(cl,comT2)
     com=[comG1,comG2]
 
     gkhy = getgrade(userid,'GK','Half Yearly')
     gkpt2 = getgrade(userid,'GK','PT II')
     gkann = getgrade(userid,'GK','Annual')  
-    gkT1 = gkhy
-    gkT2 = int(gkpt2)+int(gkann)
-    gkG1 = makegrade(cl,gkT1*2.5)
-    gkG2 = makegrade(cl,gkT2*2.5)
+    gkT1 = math.ceil(gkhy*100/40)
+    gkT2 = math.ceil((int(gkpt2)+int(gkann))*100/40)
+    gkG1 = makegrade1(cl,gkT1)
+    gkG2 = makegrade1(cl,gkT2)
     gk=[gkG1,gkG2]
 
     drhy = getgrade(userid,'Drawing','Half Yearly')
@@ -169,8 +203,8 @@ def database(cl,userid):
     drann = getgrade(userid,'Drawing','Annual')  
     drT1 = drhy
     drT2 = int(drpt2)+int(drann)
-    drG1 = makegrade(cl,drT1*2)
-    drG2 = makegrade(cl,drT2*2)
+    drG1 = makegrade1(cl,math.ceil(drT1*2))
+    drG2 = makegrade1(cl,math.ceil(drT2*2))
     dr=[drG1,drG2]
 
     eng = getsub(userid,cl,'English')
@@ -207,14 +241,14 @@ def database(cl,userid):
     disg2 = scale(dis2)
     dis = [disg1,disg2]
     try:
-        rem = (student_marks.objects.filter(userid=userid).filter(coursename='Class').get(gradebookitem='Remarks')).substring
+        rem = (student_marks.objects.filter(userid=userid).filter(coursename='Class').get(gradebookitem='Remarks 2')).substring
     except student_marks.DoesNotExist:
         rem = " "
     try:
-        partic = (student_marks.objects.filter(userid=userid).filter(coursename='Class').get(gradebookitem='Participation In')).substring
+        partic = (student_marks.objects.filter(userid=userid).filter(coursename='Class').get(gradebookitem='Participation In 2')).substring
     except student_marks.DoesNotExist:
         try:
-            partic = (student_marks.objects.filter(userid=userid).filter(coursename='Class').get(gradebookitem='Participation in')).substring
+            partic = (student_marks.objects.filter(userid=userid).filter(coursename='Class').get(gradebookitem='Participation in 2')).substring
         except student_marks.DoesNotExist:
             partic = " "
     
@@ -462,7 +496,7 @@ def getmarks(userid,sub,gbooki):
         grad=0
     if grad is None:
         grad=0
-    return(round(float(grad)/2))
+    return(math.ceil(float(grad)/2))
 
 def getmarks1(userid,sub,gbooki):
     try:
@@ -483,7 +517,7 @@ def getmarks1(userid,sub,gbooki):
         grad=0
     if grad is None:
         grad=0
-    return(round(float(grad)))
+    return(math.ceil(float(grad)))
 
 def makegradenal(num):
     if num>90:

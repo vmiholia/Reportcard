@@ -1,0 +1,58 @@
+Drop table april;
+
+Create table april
+As
+(SELECT bitnami_moodle.mdl_user.id as userid,
+bitnami_moodle.mdl_user.firstname,
+SUBSTRING_INDEX(bitnami_moodle.mdl_course.fullname,' ',-2) as Class,
+SUBSTRING_INDEX(bitnami_moodle.mdl_course.fullname,' ',1) as coursename,
+bitnami_moodle.mdl_grade_items.itemname AS gradebookitem,
+bitnami_moodle.mdl_grade_grades.finalgrade AS grade,
+bitnami_moodle.mdl_grade_grades.feedback AS substring,
+bitnami_moodle.mdl_grade_grades.timemodified AS raw_grade
+FROM bitnami_moodle.mdl_grade_grades
+JOIN bitnami_moodle.mdl_user ON bitnami_moodle.mdl_grade_grades.userid = bitnami_moodle.mdl_user.id
+JOIN bitnami_moodle.mdl_grade_items ON bitnami_moodle.mdl_grade_grades.itemid = bitnami_moodle.mdl_grade_items.id
+JOIN bitnami_moodle.mdl_course ON bitnami_moodle.mdl_grade_items.courseid = bitnami_moodle.mdl_course.id
+JOIN bitnami_moodle.mdl_user_info_data ON bitnami_moodle.mdl_user.id=bitnami_moodle.mdl_user_info_data.userid
+where bitnami_moodle.mdl_user_info_data.fieldid=5 and bitnami_moodle.mdl_user_info_data.data=16
+ORDER BY userid desc,Class,coursename,gradebookitem);
+
+Alter table april add column id int not null auto_increment primary key;
+
+update april set substring=replace(substring,'<p>','');
+
+update april set substring=replace(substring,'</p>','');
+
+update april set substring=replace(substring,'<br>','');
+
+update april set substring=replace(substring,'</br>','');
+
+update april set substring=replace(substring,'<b>','');
+
+update april set substring=replace(substring,'</b>','');
+
+update april set substring=replace(substring,'&nbsp','');
+
+update april set substring=replace(substring,';','');
+
+update april set gradebookitem = replace(gradebookitem,'PT3','PT 3');
+
+update april set gradebookitem = replace(gradebookitem,'NS1','NS 1');
+
+update april set gradebookitem = replace(gradebookitem,'NS2','NS 2');
+
+update april set gradebookitem = replace(gradebookitem,'SEA1','SEA 1');
+
+update april set gradebookitem = replace(gradebookitem,'SEA2','SEA 2');
+
+update april set raw_grade=NULL;
+
+update april set substring = replace(substring,'&amp','&');
+
+
+drop table april;
+
+truncate card_student_marks;
+
+insert into card_student_marks select * from april;
